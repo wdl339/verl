@@ -487,7 +487,11 @@ def convert_hf_to_mcore(
     if world_size > 1 and not support_distributed_convert(hf_config):
         raise NotImplementedError(f"distributed conversion is not supported for {hf_config.architectures} yet.")
 
-    pipeline_shards = get_dynamic_pipeline_shards(hf_config.num_hidden_layers, pp_size)
+    layer_num = getattr(hf_config, "num_hidden_layers", None) or getattr(hf_config.text_config, "num_hidden_layers", None)
+    if layer_num is None:
+        raise ValueError("num_hidden_layers is not found in hf_config or hf_config.text_config")
+    print(f"layer_num={layer_num}", flush=True)
+    pipeline_shards = get_dynamic_pipeline_shards(layer_num, pp_size)
     print(f"Pipeline shards: {pipeline_shards}", flush=True)
 
     tfconfig = hf_to_mcore_config(
